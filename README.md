@@ -1,4 +1,5 @@
 # Recruitment task
+
 ## Setup
 
 There're 2 directories: 
@@ -29,3 +30,6 @@ For both environments:
 - in backend / frontend directory run `npm test`*
 
 *for React and Cypress, both servers have to run in the background, so first turn on backend and frontend, then run cypress tests.
+
+## Example of application
+<img width="1058" alt="image" src="https://user-images.githubusercontent.com/25043084/172491583-1c447749-d78d-45b8-a397-bdd292e96de7.png">
