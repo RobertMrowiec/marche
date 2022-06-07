@@ -1,44 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
-import { ReactComponent as USAMap } from './map.svg';
-
-// We can do this task by multiple ways:
-// 1. We can pass the parameter to svg, wrap it as React Component and there handle filling the color,
-// 2. We can paste SVG here ( not expected cause it's big ) and add additional state (i.e. `al ${fill}`) to each class of SVG Paths and change that using state hooks
-
-// 3. We can use default HTML DOM getElementBy... the following way and include map using { ReactComponent as SVGFile}:
-// document.getElementsByClassName('ca')[0].classList.add('fill')
-// At this point I selected this way and here's the result
-
-const tempData = [
-	'ca',
-	'nv',
-	'ky',
-	'ny'
-]
+import React, { useEffect, useState } from "react";
+import "./App.css";
+import { ReactComponent as USAMap } from "./map.svg";
+import { changeStyleOfElement, FormattedStateData, matchingStates, StateData, sumVisits } from "./helper";
 
 export const App: React.FC = () => {
-	const [showError, setShowError] = useState<boolean>(false)
-	const [errorMessage, setErrorMessage] = useState<string>('')
-	const [fetchedStates, setFetchedStates] = useState<string[]>([])
+	const [selectedValue, setSelectedValue] = useState<string>("0-250");
+	const [showError, setShowError] = useState<boolean>(false);
+	const [errorMessage, setErrorMessage] = useState<string>("");
+	const [formattedJSON, setFormattedJSON] = useState<FormattedStateData[]>([]);
 
-	const fetchVisits = async () => {
-		try {
-			// const response = await fetch('https://randomuser.me/return_error')
-			// if (!response.ok) {
-			// 	throw response.statusText || "Error during fetching data"
-			// }
+	useEffect(() => {
+		(async function fetchVisits() {
+			try {
+				const response = await fetch("http://localhost:8000");
+	
+				if (!response.ok) {
+					throw (response.statusText || "Error during fetching data");
+				}
+	
+				const states: StateData[] = await response.json();
+				setFormattedJSON(sumVisits(states));
+			} catch (error: any) {
+				setShowError(true);
+				setErrorMessage(error);
+			}
+		})();
+	}, [])
 
-			// const states = await response.json()
-			setShowError(false);
-			setFetchedStates(tempData)
-		} catch (error: any) {
-			setShowError(true);
-			setErrorMessage(error)
-		}
+	useEffect(() => {
+		const [from, to] = selectedValue.split('-');
+		const statesToFill = matchingStates(formattedJSON, +from, +to);
+	
+		changeStyleOfElement(statesToFill, 'add');
+	}, [formattedJSON, selectedValue]);
+
+	const _removePreviousFill = () => {		
+		const [from, to] = selectedValue.split('-');
+		const statesToFill = matchingStates(formattedJSON, +from, +to);
+
+		changeStyleOfElement(statesToFill, 'remove');
 	}
-
-	useEffect(() => fetchedStates.forEach(state => document.getElementsByClassName(state)[0].classList.add('fill')), [fetchedStates])
 
 	return (
 		<>
@@ -48,12 +49,15 @@ export const App: React.FC = () => {
 					className="dropdown"
 					id="visits-dropdown"
 					name="visits-dropdown"
-					onChange={fetchVisits}
+					onChange={(e) => {
+						_removePreviousFill();
+						setSelectedValue(e.target.value);
+					}}
 				>
 					<option value="0-250">0-250</option>
 					<option value="250-500">250-500</option>
 					<option value="500-1000">500-1000</option>
-					<option value="1000+">1000+</option>
+					<option value="1000">1000+</option>
 				</select>
 				{showError && <p className="error">{errorMessage}</p>}
 			</div>
